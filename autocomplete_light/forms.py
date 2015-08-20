@@ -22,7 +22,6 @@ from django.forms.models import ModelFormMetaclass as DjangoModelFormMetaclass
 from django.utils.encoding import force_text
 from django.utils.translation import ugettext_lazy as _
 
-from .contrib.taggit_field import TaggitField
 from .fields import (GenericModelChoiceField, GenericModelMultipleChoiceField,
                      ModelChoiceField, ModelMultipleChoiceField)
 from .widgets import MultipleChoiceWidget
@@ -199,12 +198,6 @@ class FormfieldCallback(object):
         self.default = default or _default
 
     def __call__(self, model_field, **kwargs):
-        try:
-            from taggit.managers import TaggableManager
-        except ImportError:
-            class TaggableManager(object):
-                pass
-
         if (self.autocomplete_exclude and
                 model_field.name in self.autocomplete_exclude):
             pass
@@ -229,8 +222,6 @@ class FormfieldCallback(object):
                     kwargs['form_class'] = ModelChoiceField
                 elif isinstance(model_field, ManyToManyField):
                     kwargs['form_class'] = ModelMultipleChoiceField
-                elif isinstance(model_field, TaggableManager):
-                    kwargs['form_class'] = TaggitField
                 else:
                     # none of our concern
                     kwargs.pop('form_class')
