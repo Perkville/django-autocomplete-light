@@ -124,24 +124,7 @@ class GenericM2MRelatedObjectDescriptorHandlingMixin(forms.BaseModelForm):
             self.initial[name] = [x.object for x in related_objects]
 
     def generic_m2m_fields(self):
-        """
-        Yield name, field for each RelatedObjectsDescriptor of the model of
-        this ModelForm.
-        """
-        try:
-            from genericm2m.models import RelatedObjectsDescriptor
-        except ImportError:
-            return
-
-        for name, field in self.fields.items():
-            if not isinstance(field, GenericModelMultipleChoiceField):
-                continue
-
-            model_class_attr = getattr(self._meta.model, name, None)
-            if not isinstance(model_class_attr, RelatedObjectsDescriptor):
-                continue
-
-            yield name, field
+        pass
 
     def save(self, commit=True):
         """
@@ -309,11 +292,6 @@ class ModelFormMetaclass(DjangoModelFormMetaclass):
         except ImportError:
             from django.contrib.contenttypes.generic import GenericForeignKey
 
-        try:
-            from genericm2m.models import RelatedObjectsDescriptor
-        except ImportError:
-            RelatedObjectsDescriptor = None
-
         # All virtual fields/excludes must be move to
         # autocomplete_fields/exclude
         fields = getattr(meta, 'fields', [])
@@ -328,9 +306,7 @@ class ModelFormMetaclass(DjangoModelFormMetaclass):
             if model_field is None:
                 continue
 
-            if ((RelatedObjectsDescriptor and isinstance(model_field,
-                (RelatedObjectsDescriptor, GenericForeignKey))) or
-                    isinstance(model_field, GenericForeignKey)):
+            if isinstance(model_field, GenericForeignKey):
 
                 meta.fields.remove(field)
 
@@ -366,15 +342,6 @@ class ModelFormMetaclass(DjangoModelFormMetaclass):
     def post_new(cls, new_class, meta):
         cls.add_generic_fk_fields(new_class, meta)
 
-        try:
-            from genericm2m.models import RelatedObjectsDescriptor
-        except ImportError:
-            RelatedObjectsDescriptor = None
-
-        if RelatedObjectsDescriptor:
-            # if genericm2m is installed
-            cls.add_generic_m2m_fields(new_class, meta)
-
     @classmethod
     def add_generic_fk_fields(cls, new_class, meta):
         widgets = getattr(meta, 'widgets', {})
@@ -398,25 +365,7 @@ class ModelFormMetaclass(DjangoModelFormMetaclass):
 
     @classmethod
     def add_generic_m2m_fields(cls, new_class, meta):
-        try:
-            from genericm2m.models import RelatedObjectsDescriptor
-        except ImportError:
-            RelatedObjectsDescriptor = None
-
-        widgets = getattr(meta, 'widgets', {})
-
-        for field in meta.model.__dict__.values():
-            if not isinstance(field, RelatedObjectsDescriptor):
-                continue
-
-            if cls.skip_field(meta, field):
-                continue
-
-            new_class.base_fields[field.name] = \
-                GenericModelMultipleChoiceField(
-                    widget=widgets.get(field.name, None),
-                    autocomplete=cls.get_generic_autocomplete(
-                        meta, field.name))
+        pass
 
     @classmethod
     def get_generic_autocomplete(self, meta, name):
